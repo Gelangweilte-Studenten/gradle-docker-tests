@@ -9,7 +9,7 @@ import org.gradle.api.tasks.TaskAction
 import java.io.File
 
 @Suppress("unused")
-class DockerBuildTask : DefaultTask() {
+open class DockerBuildTask : DefaultTask() {
 
     /**
      * The tag to use for the built image.

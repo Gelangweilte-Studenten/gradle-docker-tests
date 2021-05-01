@@ -5,12 +5,13 @@ import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 import java.io.ByteArrayOutputStream
 
 @Suppress("unused")
-class DockerRunTask: DefaultTask() {
+open class DockerRunTask : DefaultTask() {
 
     /**
      * Specifies the name of the image to run.
@@ -42,9 +43,9 @@ class DockerRunTask: DefaultTask() {
      * The container name will automatically be set after this task has been executed by analyzing the output stream.
      * Note: This is an internal property that should not be visible from outside to prevent hardcoded container names.
      */
-    @Optional
-    @Input
-    val containerName: Property<String> = project.objects.property(String::class.java)
+    @Internal
+    var containerName: String = ""
+        private set
 
     /**
      * Additional docker arguments that are not already covered by the other properties.
@@ -74,6 +75,13 @@ class DockerRunTask: DefaultTask() {
     }
 
     /**
+     * Manually set the container name for the started container.
+     */
+    fun containerName(containerName: String) {
+        this.containerName = containerName
+    }
+
+    /**
      * Easier kotlin specific way to simplify environment map.
      */
     operator fun <K : Any, V : Any> MapProperty<K, V>.set(key: K, value: V) {
@@ -94,8 +102,8 @@ class DockerRunTask: DefaultTask() {
                 // Used to store the output
                 it.standardOutput = output
             }
-            if (!containerName.isPresent) {
-                containerName.set(output.toString().lineSequence().first())
+            if (containerName.isBlank()) {
+                containerName = output.toString().lineSequence().first()
             }
             println("Started container $containerName")
         }
@@ -114,11 +122,12 @@ class DockerRunTask: DefaultTask() {
             cmd += "-p"
             cmd += hostPort.get().toString() + ":" + containerPort.get()
         }
-        if (containerName.isPresent) {
+        if (containerName.isNotBlank()) {
             cmd += "--name"
-            cmd += containerName.get()
+            cmd += containerName
         }
         cmd += args.get()
+        cmd += image.get()
         return cmd
     }
 }
