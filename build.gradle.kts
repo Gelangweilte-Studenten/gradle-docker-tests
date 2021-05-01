@@ -3,7 +3,7 @@ plugins {
     `java-gradle-plugin`
 }
 
-group = "de.floribe2000"
+group = "com.github"
 version = "1.0"
 
 repositories {
