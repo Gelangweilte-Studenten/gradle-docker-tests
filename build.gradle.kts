@@ -22,6 +22,7 @@ dependencies {
 
 val javaCompatibilityVersion = JavaVersion.VERSION_1_8
 val pluginName = "gradleDockerTests"
+val pluginId = "$group.gradle-docker-tests"
 
 java {
     sourceCompatibility = javaCompatibilityVersion
@@ -30,7 +31,7 @@ java {
 
 gradlePlugin {
     plugins.create(pluginName) {
-        id = "$group.gradle-docker-tests"
+        id = pluginId
         implementationClass = "com.github.gradledockertests.DockerPlugin"
     }
 }
@@ -42,7 +43,7 @@ pluginBundle {
 
     (plugins) {
         pluginName {
-            id = project.group.toString()
+            id = pluginId
             displayName = "Gradle Docker test plugin"
             description = "Gradle plugin for building and running docker images and containers that can be used during unit tests."
             tags = listOf("java", "kotlin", "gradle", "docker", "test")
@@ -52,6 +53,7 @@ pluginBundle {
     mavenCoordinates {
         groupId = project.group.toString()
         artifactId = "gradle-docker-tests"
+        version = project.version.toString()
     }
 }
 
