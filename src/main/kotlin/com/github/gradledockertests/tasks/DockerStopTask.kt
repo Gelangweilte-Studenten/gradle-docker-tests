@@ -1,12 +1,14 @@
 package com.github.gradledockertests.tasks
 
-import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.TaskAction
 import org.gradle.api.tasks.TaskProvider
 
+/**
+ * A task that allows to stop running containers from other tasks.
+ */
 @Suppress("unused")
-open class DockerStopTask : DefaultTask() {
+abstract class DockerStopTask : DockerTask() {
     /**
      * List of started containers while gradle execution to stop them after tests finished.
      */
@@ -14,7 +16,14 @@ open class DockerStopTask : DefaultTask() {
     val containers = mutableListOf<DockerRunTask>()
 
     /**
-     * Adds a container from a [DockerRunTask] to the list of the containers to stop.
+     * Adds containers from multiple [DockerRunTask] instances to the list of the containers to stop.
+     */
+    fun stopContainersFromTasks(vararg containers: TaskProvider<DockerRunTask>) {
+        this.containers.addAll(containers.map { it.get() })
+    }
+
+    /**
+     * Adds a container from a single [DockerRunTask] instance to the list of containers to stop.
      */
     fun stopContainerFromTask(container: TaskProvider<DockerRunTask>) {
         containers += container.get()
@@ -25,14 +34,20 @@ open class DockerStopTask : DefaultTask() {
      */
     @TaskAction
     fun start() {
+        if (!checkDockerAvailability()) return
+
         if (containers.isEmpty()) {
             return
         }
-        project.exec { exec ->
+        project.exec {
             // Stop and remove container
-            exec.commandLine(listOf("docker", "stop") + containers.joinToString(" ") { it.containerName } )
-            exec.workingDir(project.projectDir)
-            exec.isIgnoreExitValue = true // Ignore when container already stopped
+            commandLine(listOf("docker", "stop") + containers.joinToString(" ") { it.containerName })
+            workingDir(project.projectDir)
+            isIgnoreExitValue = true // Ignore when container already stopped
         }
+    }
+
+    companion object {
+        const val Name = "dockerStop"
     }
 }

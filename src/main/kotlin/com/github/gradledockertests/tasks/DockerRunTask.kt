@@ -1,43 +1,37 @@
 package com.github.gradledockertests.tasks
 
-import org.gradle.api.DefaultTask
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
+import org.gradle.kotlin.dsl.listProperty
+import org.gradle.kotlin.dsl.mapProperty
+import org.gradle.kotlin.dsl.property
 import java.io.ByteArrayOutputStream
 
 @Suppress("unused")
-open class DockerRunTask : DefaultTask() {
+abstract class DockerRunTask : DockerTask() {
 
     /**
      * Specifies the name of the image to run.
      */
     @Input
-    val image: Property<String> = project.objects.property(String::class.java)
+    val image: Property<String> = project.objects.property(String::class)
 
     /**
      * The environment variables to be configured in docker container.
      */
     @Input
-    val environment: MapProperty<String, String> = project.objects.mapProperty(String::class.java, String::class.java)
+    val environment: MapProperty<String, String> = project.objects.mapProperty(String::class, String::class)
 
     /**
-     * Used to configure the port for the host of a container.
+     * The port mapping used by the created container.
+     * Mapping is specified as (host port, container port) according to docker syntax.
      */
-    @Optional
     @Input
-    val hostPort: Property<Int> = project.objects.property(Int::class.java)
-
-    /**
-     * Used to configure the local port of a container.
-     */
-    @Optional
-    @Input
-    val containerPort: Property<Int> = project.objects.property(Int::class.java)
+    val portMapping: MapProperty<Int, Int> = project.objects.mapProperty(Int::class, Int::class)
 
     /**
      * The container name will automatically be set after this task has been executed by analyzing the output stream.
@@ -49,9 +43,17 @@ open class DockerRunTask : DefaultTask() {
 
     /**
      * Additional docker arguments that are not already covered by the other properties.
+     * @see args
      */
     @Input
-    var args: ListProperty<String> = project.objects.listProperty(String::class.java)
+    var args: ListProperty<String> = project.objects.listProperty(String::class)
+
+    /**
+     * Utility function to specify the image name.
+     */
+    fun image(imageName: String) {
+        this.image.set(imageName)
+    }
 
     /**
      * Additional docker arguments that are not already covered by the other properties.
@@ -61,17 +63,17 @@ open class DockerRunTask : DefaultTask() {
     }
 
     /**
-     * Used to configure the local port of a container.
+     * Adds or updates a port mapping for this run task.
      */
-    fun containerPort(port: Int) {
-        this.containerPort.set(port)
+    fun addPort(host: Int, container: Int) {
+        this.portMapping[host] = container
     }
 
     /**
-     * Used to configure the port for the host of a container.
+     * Removes a port mapping for this run task.
      */
-    fun hostPort(port: Int) {
-        this.hostPort.set(port)
+    fun removePort(host: Int) {
+        this.portMapping.get().remove(host)
     }
 
     /**
@@ -82,7 +84,7 @@ open class DockerRunTask : DefaultTask() {
     }
 
     /**
-     * Easier kotlin specific way to simplify environment map.
+     * Easier kotlin specific way to simplify map property assignments.
      */
     operator fun <K : Any, V : Any> MapProperty<K, V>.set(key: K, value: V) {
         this.put(key, value)
@@ -93,14 +95,16 @@ open class DockerRunTask : DefaultTask() {
      */
     @TaskAction
     fun start() {
+        if (!checkDockerAvailability()) return
+
         ByteArrayOutputStream().use { output ->
             project.exec {
-                it.workingDir(project.projectDir)
-                it.commandLine(toCommandLine())
-                println("Execute command: " + it.commandLine.joinToString(" "))
+                workingDir(project.projectDir)
+                commandLine(toCommandLine())
+                println("Execute command: " + commandLine.joinToString(" "))
 
                 // Used to store the output
-                it.standardOutput = output
+                standardOutput = output
             }
             if (containerName.isBlank()) {
                 containerName = output.toString().lineSequence().first()
@@ -118,10 +122,11 @@ open class DockerRunTask : DefaultTask() {
             cmd += "-e"
             cmd += "$key=$value"
         }
-        if (hostPort.isPresent && containerPort.isPresent) {
+        for ((hostPort, containerPort) in portMapping.get()) {
             cmd += "-p"
-            cmd += hostPort.get().toString() + ":" + containerPort.get()
+            cmd += "$hostPort:$containerPort"
         }
+
         if (containerName.isNotBlank()) {
             cmd += "--name"
             cmd += containerName
@@ -129,5 +134,9 @@ open class DockerRunTask : DefaultTask() {
         cmd += args.get()
         cmd += image.get()
         return cmd
+    }
+
+    companion object {
+        const val Name = "dockerRun"
     }
 }
