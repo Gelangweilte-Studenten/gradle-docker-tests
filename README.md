@@ -14,7 +14,7 @@ The recommended way to install this plugin is by using the gradle `plugins` bloc
 
 ```gradle
 plugins {
-    id("com.github.gradle-docker.gradle-docker-tests") version "1.0.0"
+    id("com.github.gelangweilte-studenten.gradle-docker-tests") version "1.0.0"
 }
 ```
 
@@ -42,7 +42,7 @@ the created image. The name definition is redundant in this case because the pro
 ```gradle
 val buildImage by registering(DockerBuildTask::class) {
     imageName(project.name)
-    repository("hs-aalen")
+    repository("testrepo")
 }
 ```
 

@@ -7,7 +7,7 @@ plugins {
     id("org.jetbrains.dokka") version "1.4.32"
 }
 
-group = "com.github.gradle-docker"
+group = "com.github.gelangweilte-studenten"
 version = "1.0.0"
 
 repositories {
