@@ -41,7 +41,7 @@ abstract class DockerStopTask : DockerTask() {
         }
         project.exec {
             // Stop and remove container
-            commandLine(listOf("docker", "stop") + containers.joinToString(" ") { it.containerName })
+            commandLine(listOf("docker", "stop") + containers.map { it.containerName })
             workingDir(project.projectDir)
             isIgnoreExitValue = true // Ignore when container already stopped
         }
