@@ -71,6 +71,9 @@ container port. It is possible to assign a free host port automatically through 
 
 **If you assign multiple port mappings and need to access them later it is not recommended using this property.**
 
+If the container has to run a specific command, it can be provided using the `command(string)` method or by setting
+the `command` property.
+
 ### Stop a docker container
 
 The containers created by the `DockerRunTask` can be stopped using the `DockerStopTask`. To do this, simply add the task

@@ -5,6 +5,7 @@ import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.TaskAction
 import org.gradle.kotlin.dsl.listProperty
 import org.gradle.kotlin.dsl.mapProperty
@@ -18,20 +19,20 @@ abstract class DockerRunTask : DockerTask() {
      * Specifies the name of the image to run.
      */
     @Input
-    val image: Property<String> = project.objects.property(String::class)
+    val image: Property<String> = project.objects.property()
 
     /**
      * The environment variables to be configured in docker container.
      */
     @Input
-    val environment: MapProperty<String, String> = project.objects.mapProperty(String::class, String::class)
+    val environment: MapProperty<String, String> = project.objects.mapProperty()
 
     /**
      * The port mapping used by the created container.
      * Mapping is specified as (host port, container port) according to docker syntax.
      */
     @Input
-    val portMapping: MapProperty<Int, Int> = project.objects.mapProperty(Int::class, Int::class)
+    val portMapping: MapProperty<Int, Int> = project.objects.mapProperty()
 
     /**
      * The container name will automatically be set after this task has been executed by analyzing the output stream.
@@ -47,6 +48,13 @@ abstract class DockerRunTask : DockerTask() {
      */
     @Input
     var args: ListProperty<String> = project.objects.listProperty(String::class)
+
+    /**
+     * The command to execute when starting the container.
+     */
+    @Input
+    @Optional
+    val command: Property<String> = project.objects.property()
 
     /**
      * Utility function to specify the image name.
@@ -81,6 +89,13 @@ abstract class DockerRunTask : DockerTask() {
      */
     fun containerName(containerName: String) {
         this.containerName = containerName
+    }
+
+    /**
+     * Sets the command to execute after starting the container.
+     */
+    fun command(command: String) {
+        this.command.set(command)
     }
 
     /**
@@ -133,6 +148,9 @@ abstract class DockerRunTask : DockerTask() {
         }
         cmd += args.get()
         cmd += image.get()
+        if (command.isPresent) {
+            cmd += command.get().split(" ")
+        }
         return cmd
     }
 
