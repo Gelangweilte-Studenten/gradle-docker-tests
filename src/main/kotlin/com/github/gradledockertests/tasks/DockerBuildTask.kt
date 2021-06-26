@@ -50,6 +50,12 @@ abstract class DockerBuildTask : DockerTask() {
     var directory: File = project.projectDir
 
     /**
+     * The target directory where build images can be saved. Set to null to disable saving build image.
+     */
+    @Internal
+    var targetImageFolder: File? = File(project.buildDir, "container-images")
+
+    /**
      * Utility method to specify the tag directly.
      */
     fun tag(tag: String) {
@@ -78,6 +84,13 @@ abstract class DockerBuildTask : DockerTask() {
     }
 
     /**
+     * Specify the path where the new image should be saved.
+     */
+    fun saveImageTo(directory: File) {
+        this.targetImageFolder = directory
+    }
+
+    /**
      * Executes the docker build process using the provided arguments.
      */
     @TaskAction
@@ -95,9 +108,21 @@ abstract class DockerBuildTask : DockerTask() {
         }
         argumentList.add(".")
 
+        // Execute image build command
         project.exec {
             workingDir(directory)
             commandLine(argumentList)
+        }
+
+        // Save the new image
+        val targetFolder = targetImageFolder
+        if (targetFolder != null) {
+            targetFolder.mkdirs()
+            project.exec {
+                workingDir(directory)
+                val targetPath = targetFolder.path + "/" + project.name + ".tar"
+                commandLine("docker", "save", "-o", targetPath, project.name)
+            }
         }
     }
 
