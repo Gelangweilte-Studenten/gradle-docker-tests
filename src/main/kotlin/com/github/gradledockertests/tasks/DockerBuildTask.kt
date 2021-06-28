@@ -1,7 +1,10 @@
 package com.github.gradledockertests.tasks
 
 import org.gradle.api.provider.Property
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.TaskAction
 import org.gradle.kotlin.dsl.property
 import java.io.File
 
@@ -128,18 +131,19 @@ abstract class DockerBuildTask : DockerTask() {
         // Save the new image
         val targetFolder = targetImageFolder
         if (targetFolder != null) {
-            val targetPath = targetFolder.path + "/" + project.name + ".tar"
-
             // Ensure target folder exists
             targetFolder.mkdirs()
+            val targetImageLocation = File(targetFolder.path, project.name + ".tar")
 
             // docker-archive doesn't support modifying existing images
-            targetFolder.listFiles()?.forEach { it.deleteRecursively() }
+            if (targetImageLocation.exists()) {
+                targetImageLocation.delete()
+            }
 
             project.exec {
                 workingDir(directory)
 
-                commandLine("docker", "save", "-o", targetPath, imageBaseName + "latest")
+                commandLine("docker", "save", "-o", targetImageLocation.path, imageBaseName + "latest")
             }
         }
     }
