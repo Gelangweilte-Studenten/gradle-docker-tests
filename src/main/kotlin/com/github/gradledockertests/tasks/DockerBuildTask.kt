@@ -129,7 +129,6 @@ abstract class DockerBuildTask : DockerTask() {
         val targetFolder = targetImageFolder
         if (targetFolder != null) {
             val targetPath = targetFolder.path + "/" + project.name + ".tar"
-            outputs.file(targetPath)
 
             // Ensure target folder exists
             targetFolder.mkdirs()
