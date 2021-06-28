@@ -133,7 +133,7 @@ abstract class DockerBuildTask : DockerTask() {
             project.exec {
                 workingDir(directory)
                 val targetPath = targetFolder.path + "/" + project.name + ".tar"
-                commandLine("docker", "save", "-o", targetPath, project.name)
+                commandLine("docker", "save", "-o", targetPath, imageBaseName + "latest")
             }
         }
     }
