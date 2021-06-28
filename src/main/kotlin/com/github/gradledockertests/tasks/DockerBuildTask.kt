@@ -1,10 +1,7 @@
 package com.github.gradledockertests.tasks
 
 import org.gradle.api.provider.Property
-import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Optional
-import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.*
 import org.gradle.kotlin.dsl.property
 import java.io.File
 
@@ -41,7 +38,7 @@ abstract class DockerBuildTask : DockerTask() {
      */
     @Input
     @Optional
-    val tagLatest: Property<Boolean> = project.objects.property(Boolean::class)
+    val tagLatest: Property<Boolean> = project.objects.property(Boolean::class).value(true)
 
     /**
      * The working directory for the docker build process.
@@ -53,6 +50,7 @@ abstract class DockerBuildTask : DockerTask() {
      * The target directory where build images can be saved. Set to null to disable saving build image.
      */
     @Internal
+    @OutputDirectory
     var targetImageFolder: File? = File(project.buildDir, "container-images")
 
     /**
@@ -98,6 +96,13 @@ abstract class DockerBuildTask : DockerTask() {
     }
 
     /**
+     * Set the tagLatest property to the specified value.
+     */
+    fun tagLatest(isTagLatest: Boolean) {
+        tagLatest.set(isTagLatest)
+    }
+
+    /**
      * Executes the docker build process using the provided arguments.
      */
     @TaskAction
@@ -124,6 +129,9 @@ abstract class DockerBuildTask : DockerTask() {
         // Save the new image
         val targetFolder = targetImageFolder
         if (targetFolder != null) {
+            val targetPath = targetFolder.path + "/" + project.name + ".tar"
+            outputs.file(targetPath)
+
             // Ensure target folder exists
             targetFolder.mkdirs()
 
@@ -132,7 +140,7 @@ abstract class DockerBuildTask : DockerTask() {
 
             project.exec {
                 workingDir(directory)
-                val targetPath = targetFolder.path + "/" + project.name + ".tar"
+
                 commandLine("docker", "save", "-o", targetPath, imageBaseName + "latest")
             }
         }
