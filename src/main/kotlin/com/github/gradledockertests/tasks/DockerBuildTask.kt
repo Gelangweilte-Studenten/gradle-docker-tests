@@ -91,6 +91,13 @@ abstract class DockerBuildTask : DockerTask() {
     }
 
     /**
+     * Specify the path where the new image should be saved.
+     */
+    fun saveImageTo(directoryPath: String) {
+        targetImageFolder = File(directoryPath)
+    }
+
+    /**
      * Executes the docker build process using the provided arguments.
      */
     @TaskAction
@@ -117,7 +124,12 @@ abstract class DockerBuildTask : DockerTask() {
         // Save the new image
         val targetFolder = targetImageFolder
         if (targetFolder != null) {
+            // Ensure target folder exists
             targetFolder.mkdirs()
+
+            // docker-archive doesn't support modifying existing images
+            targetFolder.listFiles()?.forEach { it.deleteRecursively() }
+
             project.exec {
                 workingDir(directory)
                 val targetPath = targetFolder.path + "/" + project.name + ".tar"
