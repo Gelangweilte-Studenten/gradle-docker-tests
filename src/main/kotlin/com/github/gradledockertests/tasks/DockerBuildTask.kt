@@ -50,7 +50,6 @@ abstract class DockerBuildTask : DockerTask() {
      * The target directory where build images can be saved. Set to null to disable saving build image.
      */
     @Internal
-    @OutputDirectory
     var targetImageFolder: File? = File(project.buildDir, "container-images")
 
     /**
