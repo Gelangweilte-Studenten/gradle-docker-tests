@@ -41,7 +41,7 @@ abstract class DockerBuildTask : DockerTask() {
      */
     @Input
     @Optional
-    val tagLatest: Property<Boolean> = project.objects.property(Boolean::class).value(true)
+    val tagLatest: Property<Boolean> = project.objects.property(Boolean::class).convention(true)
 
     /**
      * The working directory for the docker build process.
@@ -116,7 +116,7 @@ abstract class DockerBuildTask : DockerTask() {
         val actualImageName = if (imageName.isPresent) imageName.get() else project.name
         val imageBaseName = "$actualRepository$actualImageName:"
         val argumentList = mutableListOf("docker", "build", "-t", imageBaseName + actualTag)
-        if (tagLatest.isPresent && tagLatest.get()) {
+        if (tagLatest.get()) {
             argumentList.add("-t")
             argumentList.add(imageBaseName + "latest")
         }
